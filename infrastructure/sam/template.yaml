@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Customer Data Platform serverless resources
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    MemorySize: 256
+
+Resources:
+  ValidationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: cdp-validation-dev
+      Handler: lambda/validation/handler.lambda_handler
+      CodeUri: ../../
+      Policies:
+        - AWSLambdaBasicExecutionRole
