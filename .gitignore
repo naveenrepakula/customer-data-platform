@@ -8,3 +8,5 @@ __pycache__/
 dist/
 build/
 *.zip
+.venv/
+.vscode/
