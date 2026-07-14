@@ -82,3 +82,32 @@ def test_lambda_handler_missing_required_column():
     assert response["statusCode"] == 400
     assert response_body["is_valid"] is False
     assert "phone_number" in response_body["missing_columns"]
+
+
+def test_lambda_handler_empty_csv():
+    event = {
+        "Records": [
+            {
+                "s3": {
+                    "bucket": {
+                        "name": "cdp-raw-dev",
+                    },
+                    "object": {
+                        "key": "customer/empty.csv",
+                    },
+                }
+            }
+        ]
+    }
+
+    with patch.object(
+        handler,
+        "read_csv_header_from_s3",
+        side_effect=ValueError("CSV file is empty"),
+    ):
+        response = handler.lambda_handler(event, None)
+
+    assert response["statusCode"] == 400
+    assert json.loads(response["body"]) == {
+        "message": "CSV file is empty",
+    }

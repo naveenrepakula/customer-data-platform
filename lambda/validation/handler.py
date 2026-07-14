@@ -28,21 +28,35 @@ def lambda_handler(event, context):
         object_key,
     )
 
-    csv_header = read_csv_header_from_s3(
-        bucket_name=bucket_name,
-        object_key=object_key,
-    )
+    try:
+        csv_header = read_csv_header_from_s3(
+            bucket_name=bucket_name,
+            object_key=object_key,
+        )
+    except ValueError as error:
+        logger.error("Validation failed: %s", error)
+
+        return {
+            "statusCode": 400,
+            "body": json.dumps(
+                {
+                    "message": str(error),
+                }
+            ),
+        }
 
     result = validate_csv_header(csv_header)
 
     if not result["is_valid"]:
         logger.error("Validation failed: %s", result)
+
         return {
             "statusCode": 400,
             "body": json.dumps(result),
         }
 
     logger.info("Validation successful")
+
     return {
         "statusCode": 200,
         "body": json.dumps(
