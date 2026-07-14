@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Customer Data Platform serverless resources
 
@@ -9,11 +9,44 @@ Globals:
     MemorySize: 256
 
 Resources:
+  RawDataBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "cdp-raw-dev-${AWS::AccountId}-${AWS::Region}"
+
   ValidationFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: cdp-validation-dev
       Handler: lambda/validation/handler.lambda_handler
       CodeUri: ../../
+
       Policies:
         - AWSLambdaBasicExecutionRole
+        - S3ReadPolicy:
+            BucketName: !Sub "cdp-raw-dev-${AWS::AccountId}-${AWS::Region}"
+
+      Events:
+        CustomerCsvUpload:
+          Type: S3
+          Properties:
+            Bucket: !Ref RawDataBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: customer/
+                  - Name: suffix
+                    Value: .csv
+
+Outputs:
+  RawDataBucketName:
+    Description: Name of the CDP DEV raw-data bucket
+    Value: !Ref RawDataBucket
+
+  ValidationFunctionName:
+    Description: Name of the CSV validation Lambda function
+    Value: !Ref ValidationFunction
