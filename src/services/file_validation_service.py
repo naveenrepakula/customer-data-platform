@@ -8,8 +8,16 @@ REQUIRED_COLUMNS = [
     "phone_number",
 ]
 
+
 def validate_csv_header(header: List[str]) -> Dict[str, object]:
-    missing = [col for col in REQUIRED_COLUMNS if col not in header]
+    normalized_header = [column.strip() for column in header]
+
+    missing = [
+        column
+        for column in REQUIRED_COLUMNS
+        if column not in normalized_header
+    ]
+
     return {
         "is_valid": len(missing) == 0,
         "missing_columns": missing,
