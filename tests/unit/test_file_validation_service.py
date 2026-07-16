@@ -18,3 +18,18 @@ def test_validate_csv_header_missing_column():
     assert result["is_valid"] is False
     assert "email" in result["missing_columns"]
     assert "phone_number" in result["missing_columns"]
+
+
+def test_validate_csv_header_with_whitespace():
+    header = [
+        "customer_id",
+        " customer_name ",
+        " email ",
+        " created_at ",
+        " phone_number ",
+    ]
+
+    result = validate_csv_header(header)
+
+    assert result["is_valid"] is True
+    assert result["missing_columns"] == []
