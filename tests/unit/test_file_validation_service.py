@@ -11,6 +11,7 @@ def test_validate_csv_header_success():
     result = validate_csv_header(header)
     assert result["is_valid"] is True
     assert result["missing_columns"] == []
+    assert result["duplicate_columns"] == []
 
 def test_validate_csv_header_missing_column():
     header = ["customer_id", "customer_name"]
@@ -33,3 +34,38 @@ def test_validate_csv_header_with_whitespace():
 
     assert result["is_valid"] is True
     assert result["missing_columns"] == []
+
+
+
+def test_validate_csv_header_with_duplicate_column():
+    header = [
+        "customer_id",
+        "customer_name",
+        "email",
+        "email",
+        "created_at",
+        "phone_number",
+    ]
+
+    result = validate_csv_header(header)
+
+    assert result["is_valid"] is False
+    assert result["missing_columns"] == []
+    assert result["duplicate_columns"] == ["email"]
+
+
+def test_validate_csv_header_with_duplicate_after_whitespace_normalization():
+    header = [
+        "customer_id",
+        "customer_name",
+        "email",
+        " email ",
+        "created_at",
+        "phone_number",
+    ]
+
+    result = validate_csv_header(header)
+
+    assert result["is_valid"] is False
+    assert result["missing_columns"] == []
+    assert result["duplicate_columns"] == ["email"]

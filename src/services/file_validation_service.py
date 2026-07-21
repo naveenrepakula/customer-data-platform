@@ -18,7 +18,17 @@ def validate_csv_header(header: List[str]) -> Dict[str, object]:
         if column not in normalized_header
     ]
 
+    seen = set()
+    duplicates = []
+
+    for column in normalized_header:
+        if column in seen and column not in duplicates:
+            duplicates.append(column)
+
+        seen.add(column)
+
     return {
-        "is_valid": len(missing) == 0,
+        "is_valid": len(missing) == 0 and len(duplicates) == 0,
         "missing_columns": missing,
+        "duplicate_columns": duplicates,
     }
