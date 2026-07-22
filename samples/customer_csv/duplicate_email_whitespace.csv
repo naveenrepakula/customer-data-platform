@@ -1,0 +1,2 @@
+customer_id,customer_name,email, email ,created_at,phone_number
+1004,Whitespace Duplicate Sample,first@example.com,second@example.com,2026-07-22,9000000004
