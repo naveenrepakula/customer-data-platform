@@ -14,6 +14,7 @@ def test_validate_csv_header_success():
     assert result["duplicate_columns"] == []
     assert result["blank_column_positions"] == []
     assert result["unexpected_columns"] == []
+    assert result["is_column_order_valid"] is True
 
 def test_validate_csv_header_missing_column():
     header = ["customer_id", "customer_name"]
@@ -157,3 +158,25 @@ def test_validate_csv_header_with_unexpected_column_after_whitespace_normalizati
     assert result["duplicate_columns"] == []
     assert result["blank_column_positions"] == []
     assert result["unexpected_columns"] == ["address"]
+
+
+def test_validate_csv_header_with_incorrect_column_order():
+    # Arrange
+    header = [
+        "email",
+        "customer_id",
+        "customer_name",
+        "created_at",
+        "phone_number",
+    ]
+
+    # Act
+    result = validate_csv_header(header)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["is_column_order_valid"] is False
+    assert result["missing_columns"] == []
+    assert result["unexpected_columns"] == []
+    assert result["duplicate_columns"] == []
+    assert result["blank_column_positions"] == []
