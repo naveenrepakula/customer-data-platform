@@ -13,6 +13,8 @@ REQUIRED_COLUMNS = [
 def validate_csv_header(header: List[str]) -> Dict[str, object]:
     normalized_header = [column.strip() for column in header]
 
+    is_column_order_valid = normalized_header == REQUIRED_COLUMNS
+
     missing = [
         column
         for column in REQUIRED_COLUMNS
@@ -49,7 +51,9 @@ def validate_csv_header(header: List[str]) -> Dict[str, object]:
             and len(unexpected) == 0
             and len(duplicates) == 0
             and len(blank_positions) == 0
+            and is_column_order_valid
         ),
+        "is_column_order_valid": is_column_order_valid,
         "missing_columns": missing,
         "unexpected_columns": unexpected,
         "duplicate_columns": duplicates,
