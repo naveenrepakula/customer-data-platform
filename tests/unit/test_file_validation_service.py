@@ -1,13 +1,17 @@
-from src.services.file_validation_service import validate_csv_header
+from src.services.file_validation_service import (
+    validate_csv_header,
+    validate_customer_id_rows,
+)
+
 
 def test_validate_csv_header_success():
-    header =[
-    "customer_id",
-    "customer_name",
-    "email",
-    "created_at",
-    "phone_number",
-]
+    header = [
+        "customer_id",
+        "customer_name",
+        "email",
+        "created_at",
+        "phone_number",
+    ]
     result = validate_csv_header(header)
     assert result["is_valid"] is True
     assert result["missing_columns"] == []
@@ -15,6 +19,7 @@ def test_validate_csv_header_success():
     assert result["blank_column_positions"] == []
     assert result["unexpected_columns"] == []
     assert result["is_column_order_valid"] is True
+
 
 def test_validate_csv_header_missing_column():
     header = ["customer_id", "customer_name"]
@@ -37,7 +42,6 @@ def test_validate_csv_header_with_whitespace():
 
     assert result["is_valid"] is True
     assert result["missing_columns"] == []
-
 
 
 def test_validate_csv_header_with_duplicate_column():
@@ -180,3 +184,65 @@ def test_validate_csv_header_with_incorrect_column_order():
     assert result["unexpected_columns"] == []
     assert result["duplicate_columns"] == []
     assert result["blank_column_positions"] == []
+
+
+def test_validate_customer_id_rows_with_empty_customer_id():
+    # Arrange
+    rows = [
+        ["CUST001", "Alice", "alice@example.com", "2026-08-04", "9876543210"],
+        ["", "Bob", "bob@example.com", "2026-08-04", "9876543211"],
+    ]
+
+    # Act
+    result = validate_customer_id_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["blank_customer_id_rows"] == [3]
+
+
+def test_validate_customer_id_rows_with_whitespace_only_customer_id():
+    # Arrange
+    rows = [
+        ["CUST001", "Alice", "alice@example.com", "2026-08-04", "9876543210"],
+        ["   ", "Bob", "bob@example.com", "2026-08-04", "9876543211"],
+    ]
+
+    # Act
+    result = validate_customer_id_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["blank_customer_id_rows"] == [3]
+
+
+def test_validate_customer_id_rows_with_multiple_blank_customer_ids():
+    # Arrange
+    rows = [
+        ["CUST001", "Alice", "alice@example.com", "2026-08-04", "9876543210"],
+        ["", "Bob", "bob@example.com", "2026-08-04", "9876543211"],
+        ["CUST003", "Charlie", "charlie@example.com", "2026-08-04", "9876543212"],
+        ["   ", "David", "david@example.com", "2026-08-04", "9876543213"],
+    ]
+
+    # Act
+    result = validate_customer_id_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["blank_customer_id_rows"] == [3, 5]
+
+
+def test_validate_customer_id_rows_success():
+    # Arrange
+    rows = [
+        ["CUST001", "Alice", "alice@example.com", "2026-08-04", "9876543210"],
+        ["CUST002", "Bob", "bob@example.com", "2026-08-04", "9876543211"],
+    ]
+
+    # Act
+    result = validate_customer_id_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is True
+    assert result["blank_customer_id_rows"] == []

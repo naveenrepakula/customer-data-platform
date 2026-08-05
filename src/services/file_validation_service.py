@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 
 REQUIRED_COLUMNS = [
     "customer_id",
@@ -10,16 +8,12 @@ REQUIRED_COLUMNS = [
 ]
 
 
-def validate_csv_header(header: List[str]) -> Dict[str, object]:
+def validate_csv_header(header: list[str]) -> dict[str, object]:
     normalized_header = [column.strip() for column in header]
 
     is_column_order_valid = normalized_header == REQUIRED_COLUMNS
 
-    missing = [
-        column
-        for column in REQUIRED_COLUMNS
-        if column not in normalized_header
-    ]
+    missing = [column for column in REQUIRED_COLUMNS if column not in normalized_header]
 
     unexpected = [
         column
@@ -58,4 +52,19 @@ def validate_csv_header(header: List[str]) -> Dict[str, object]:
         "unexpected_columns": unexpected,
         "duplicate_columns": duplicates,
         "blank_column_positions": blank_positions,
+    }
+
+
+def validate_customer_id_rows(
+    rows: list[list[str]],
+) -> dict[str, object]:
+    blank_customer_id_rows = [
+        line_number
+        for line_number, row in enumerate(rows, start=2)
+        if not row or row[0].strip() == ""
+    ]
+
+    return {
+        "is_valid": len(blank_customer_id_rows) == 0,
+        "blank_customer_id_rows": blank_customer_id_rows,
     }

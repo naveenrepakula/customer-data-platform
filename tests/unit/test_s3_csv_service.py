@@ -2,7 +2,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.services.s3_csv_service import read_csv_header_from_s3
+from src.services.s3_csv_service import (
+    read_csv_from_s3,
+    read_csv_header_from_s3,
+)
 
 
 def test_read_csv_header_from_s3_success():
@@ -55,6 +58,84 @@ def test_read_csv_header_from_s3_empty_file():
 
     with pytest.raises(ValueError, match="CSV file is empty"):
         read_csv_header_from_s3(
+            bucket_name="cdp-raw-dev",
+            object_key="customer/empty.csv",
+            s3_client=s3_client,
+        )
+
+
+def test_read_csv_from_s3_returns_header_and_data_rows():
+    # Arrange
+    s3_client = Mock()
+    response_body = Mock()
+
+    response_body.iter_lines.return_value = iter(
+        [
+            b"customer_id,customer_name,email,created_at,phone_number",
+            b"CUST001,Alice,alice@example.com,2026-08-04,9876543210",
+            b",Bob,bob@example.com,2026-08-04,9876543211",
+        ]
+    )
+
+    s3_client.get_object.return_value = {
+        "Body": response_body,
+    }
+
+    # Act
+    header, rows = read_csv_from_s3(
+        bucket_name="cdp-raw-dev",
+        object_key="customer/customer_sample.csv",
+        s3_client=s3_client,
+    )
+
+    # Assert
+    assert header == [
+        "customer_id",
+        "customer_name",
+        "email",
+        "created_at",
+        "phone_number",
+    ]
+
+    assert rows == [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-04",
+            "9876543210",
+        ],
+        [
+            "",
+            "Bob",
+            "bob@example.com",
+            "2026-08-04",
+            "9876543211",
+        ],
+    ]
+
+    s3_client.get_object.assert_called_once_with(
+        Bucket="cdp-raw-dev",
+        Key="customer/customer_sample.csv",
+    )
+
+    response_body.iter_lines.assert_called_once_with()
+
+
+def test_read_csv_from_s3_empty_file():
+    # Arrange
+    s3_client = Mock()
+    response_body = Mock()
+
+    response_body.iter_lines.return_value = iter([])
+
+    s3_client.get_object.return_value = {
+        "Body": response_body,
+    }
+
+    # Act and Assert
+    with pytest.raises(ValueError, match="CSV file is empty"):
+        read_csv_from_s3(
             bucket_name="cdp-raw-dev",
             object_key="customer/empty.csv",
             s3_client=s3_client,

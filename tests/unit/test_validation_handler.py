@@ -29,11 +29,21 @@ def test_lambda_handler_success():
         "phone_number",
     ]
 
+    csv_rows = [
+        [
+            "CUST001",
+            "Naveen",
+            "naveen@example.com",
+            "2026-07-14",
+            "9999999999",
+        ],
+    ]
+
     with patch.object(
         handler,
-        "read_csv_header_from_s3",
-        return_value=csv_header,
-    ) as mock_read_csv_header:
+        "read_csv_from_s3",
+        return_value=(csv_header, csv_rows),
+    ) as mock_read_csv:
         response = handler.lambda_handler(event, None)
 
     assert response["statusCode"] == 200
@@ -41,7 +51,7 @@ def test_lambda_handler_success():
         "message": "Validation successful",
     }
 
-    mock_read_csv_header.assert_called_once_with(
+    mock_read_csv.assert_called_once_with(
         bucket_name="cdp-raw-dev",
         object_key="customer/customer sample.csv",
     )
@@ -70,10 +80,12 @@ def test_lambda_handler_missing_required_column():
         "created_at",
     ]
 
+    csv_rows = []
+
     with patch.object(
         handler,
-        "read_csv_header_from_s3",
-        return_value=csv_header,
+        "read_csv_from_s3",
+        return_value=(csv_header, csv_rows),
     ):
         response = handler.lambda_handler(event, None)
 
@@ -102,7 +114,7 @@ def test_lambda_handler_empty_csv():
 
     with patch.object(
         handler,
-        "read_csv_header_from_s3",
+        "read_csv_from_s3",
         side_effect=ValueError("CSV file is empty"),
     ):
         response = handler.lambda_handler(event, None)
@@ -111,3 +123,58 @@ def test_lambda_handler_empty_csv():
     assert json.loads(response["body"]) == {
         "message": "CSV file is empty",
     }
+
+
+def test_lambda_handler_blank_customer_id():
+    event = {
+        "Records": [
+            {
+                "s3": {
+                    "bucket": {
+                        "name": "cdp-raw-dev",
+                    },
+                    "object": {
+                        "key": "customer/blank_customer_id.csv",
+                    },
+                }
+            }
+        ]
+    }
+
+    csv_header = [
+        "customer_id",
+        "customer_name",
+        "email",
+        "created_at",
+        "phone_number",
+    ]
+
+    csv_rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-04",
+            "9876543210",
+        ],
+        [
+            "",
+            "Bob",
+            "bob@example.com",
+            "2026-08-04",
+            "9876543211",
+        ],
+    ]
+
+    with patch.object(
+        handler,
+        "read_csv_from_s3",
+        return_value=(csv_header, csv_rows),
+    ):
+        response = handler.lambda_handler(event, None)
+
+    response_body = json.loads(response["body"])
+
+    assert response["statusCode"] == 400
+    assert response_body["is_valid"] is False
+    assert response_body["blank_customer_id_rows"] == [3]
