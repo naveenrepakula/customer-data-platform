@@ -1,6 +1,7 @@
 from src.services.file_validation_service import (
     validate_csv_header,
     validate_customer_id_rows,
+     validate_row_column_count,
 )
 
 
@@ -246,3 +247,135 @@ def test_validate_customer_id_rows_success():
     # Assert
     assert result["is_valid"] is True
     assert result["blank_customer_id_rows"] == []
+
+
+def test_validate_row_column_count_with_too_few_columns():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-08",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+        ],
+    ]
+
+    # Act
+    result = validate_row_column_count(
+        rows,
+        expected_column_count=5,
+    )
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["incorrect_column_count_rows"] == [3]
+
+
+def test_validate_row_column_count_with_too_many_columns():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-08",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+            "2026-08-08",
+            "9876543211",
+            "EXTRA",
+        ],
+    ]
+
+    # Act
+    result = validate_row_column_count(
+        rows,
+        expected_column_count=5,
+    )
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["incorrect_column_count_rows"] == [3]
+
+
+def test_validate_row_column_count_with_multiple_incorrect_rows():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-08",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+        ],
+        [
+            "CUST003",
+            "Charlie",
+            "charlie@example.com",
+            "2026-08-08",
+            "9876543212",
+        ],
+        [
+            "CUST004",
+            "David",
+            "david@example.com",
+            "2026-08-08",
+            "9876543213",
+            "EXTRA",
+        ],
+    ]
+
+    # Act
+    result = validate_row_column_count(
+        rows,
+        expected_column_count=5,
+    )
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["incorrect_column_count_rows"] == [3, 5]
+
+
+def test_validate_row_column_count_success():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-08",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+            "2026-08-08",
+            "9876543211",
+        ],
+    ]
+
+    # Act
+    result = validate_row_column_count(
+        rows,
+        expected_column_count=5,
+    )
+
+    # Assert
+    assert result["is_valid"] is True
+    assert result["incorrect_column_count_rows"] == []

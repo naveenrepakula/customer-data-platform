@@ -10,6 +10,7 @@ from src.common.logger import get_logger
 from src.services.file_validation_service import (
     validate_csv_header,
     validate_customer_id_rows,
+     validate_row_column_count,
 )
 from src.services.s3_csv_service import read_csv_from_s3
 
@@ -58,6 +59,20 @@ def lambda_handler(event, context):
             "body": json.dumps(header_result),
         }
     logger.info("Header validation successful")
+    column_count_result = validate_row_column_count(
+    csv_rows,
+    expected_column_count=len(csv_header),
+)
+
+    if not column_count_result["is_valid"]:
+        logger.error(
+        "Row column count validation failed: %s",
+        column_count_result,
+    )
+        return {
+        "statusCode": 400,
+        "body": json.dumps(column_count_result),
+    }
 
     row_result = validate_customer_id_rows(csv_rows)
 

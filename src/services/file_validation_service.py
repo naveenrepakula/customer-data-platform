@@ -68,3 +68,19 @@ def validate_customer_id_rows(
         "is_valid": len(blank_customer_id_rows) == 0,
         "blank_customer_id_rows": blank_customer_id_rows,
     }
+
+
+def validate_row_column_count(
+    rows: list[list[str]],
+    expected_column_count: int,
+) -> dict[str, object]:
+    incorrect_column_count_rows = [
+        line_number
+        for line_number, row in enumerate(rows, start=2)
+        if len(row) != expected_column_count
+    ]
+
+    return {
+        "is_valid": len(incorrect_column_count_rows) == 0,
+        "incorrect_column_count_rows": incorrect_column_count_rows,
+    }
