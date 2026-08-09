@@ -178,3 +178,59 @@ def test_lambda_handler_blank_customer_id():
     assert response["statusCode"] == 400
     assert response_body["is_valid"] is False
     assert response_body["blank_customer_id_rows"] == [3]
+
+
+def test_lambda_handler_incorrect_row_column_count():
+    # Arrange
+    event = {
+        "Records": [
+            {
+                "s3": {
+                    "bucket": {
+                        "name": "cdp-raw-dev",
+                    },
+                    "object": {
+                        "key": "customer/incorrect_column_count.csv",
+                    },
+                }
+            }
+        ]
+    }
+
+    csv_header = [
+        "customer_id",
+        "customer_name",
+        "email",
+        "created_at",
+        "phone_number",
+    ]
+
+    csv_rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-08",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+        ],
+    ]
+
+    # Act
+    with patch.object(
+        handler,
+        "read_csv_from_s3",
+        return_value=(csv_header, csv_rows),
+    ):
+        response = handler.lambda_handler(event, None)
+
+    response_body = json.loads(response["body"])
+
+    # Assert
+    assert response["statusCode"] == 400
+    assert response_body["is_valid"] is False
+    assert response_body["incorrect_column_count_rows"] == [3]
