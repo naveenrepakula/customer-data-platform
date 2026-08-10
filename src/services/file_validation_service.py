@@ -1,3 +1,4 @@
+from collections import defaultdict
 
 REQUIRED_COLUMNS = [
     "customer_id",
@@ -83,4 +84,33 @@ def validate_row_column_count(
     return {
         "is_valid": len(incorrect_column_count_rows) == 0,
         "incorrect_column_count_rows": incorrect_column_count_rows,
+    }
+
+
+def validate_duplicate_customer_ids(
+    rows: list[list[str]],
+) -> dict[str, object]:
+    customer_id_to_rows: dict[str, list[int]] = defaultdict(list)
+
+    for line_number, row in enumerate(rows, start=2):
+        if not row:
+            continue
+
+        customer_id = row[0].strip()
+
+        if customer_id == "":
+            continue
+
+        customer_id_to_rows[customer_id].append(line_number)
+
+    duplicate_customer_id_rows = sorted(
+        line_number
+        for line_numbers in customer_id_to_rows.values()
+        if len(line_numbers) > 1
+        for line_number in line_numbers
+    )
+
+    return {
+        "is_valid": len(duplicate_customer_id_rows) == 0,
+        "duplicate_customer_id_rows": duplicate_customer_id_rows,
     }
