@@ -1,7 +1,8 @@
 from src.services.file_validation_service import (
     validate_csv_header,
     validate_customer_id_rows,
-     validate_row_column_count,
+    validate_duplicate_customer_ids,
+    validate_row_column_count,
 )
 
 
@@ -379,3 +380,138 @@ def test_validate_row_column_count_success():
     # Assert
     assert result["is_valid"] is True
     assert result["incorrect_column_count_rows"] == []
+
+
+def test_validate_duplicate_customer_ids_with_one_duplicate():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-08",
+            "9876543210",
+        ],
+        [
+            "CUST001",
+            "Bob",
+            "bob@example.com",
+            "2026-08-08",
+            "9876543211",
+        ],
+    ]
+
+    # Act
+    result = validate_duplicate_customer_ids(rows)
+    # Assert
+    assert result["is_valid"] is False
+    assert result["duplicate_customer_id_rows"] == [2, 3]
+
+
+def test_validate_duplicate_customer_ids_success():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-08",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+            "2026-08-08",
+            "9876543211",
+        ],
+    ]
+
+    # Act
+    result = validate_duplicate_customer_ids(rows)
+
+    # Assert
+    assert result["is_valid"] is True
+    assert result["duplicate_customer_id_rows"] == []
+
+
+def test_validate_duplicate_customer_ids_with_same_id_multiple_times():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-08",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+            "2026-08-08",
+            "9876543211",
+        ],
+        [
+            "CUST001",
+            "Charlie",
+            "charlie@example.com",
+            "2026-08-08",
+            "9876543212",
+        ],
+        [
+            "CUST001",
+            "David",
+            "david@example.com",
+            "2026-08-08",
+            "9876543213",
+        ],
+    ]
+
+    # Act
+    result = validate_duplicate_customer_ids(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["duplicate_customer_id_rows"] == [2, 4, 5]
+
+
+def test_validate_duplicate_customer_ids_with_multiple_duplicate_ids():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-08",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+            "2026-08-08",
+            "9876543211",
+        ],
+        [
+            "CUST001",
+            "Charlie",
+            "charlie@example.com",
+            "2026-08-08",
+            "9876543212",
+        ],
+        [
+            "CUST002",
+            "David",
+            "david@example.com",
+            "2026-08-08",
+            "9876543213",
+        ],
+    ]
+
+    # Act
+    result = validate_duplicate_customer_ids(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["duplicate_customer_id_rows"] == [2, 3, 4, 5]

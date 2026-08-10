@@ -10,7 +10,8 @@ from src.common.logger import get_logger
 from src.services.file_validation_service import (
     validate_csv_header,
     validate_customer_id_rows,
-     validate_row_column_count,
+    validate_duplicate_customer_ids,
+    validate_row_column_count,
 )
 from src.services.s3_csv_service import read_csv_from_s3
 
@@ -60,32 +61,41 @@ def lambda_handler(event, context):
         }
     logger.info("Header validation successful")
     column_count_result = validate_row_column_count(
-    csv_rows,
-    expected_column_count=len(csv_header),
-)
+        csv_rows,
+        expected_column_count=len(csv_header),
+    )
 
     if not column_count_result["is_valid"]:
         logger.error(
-        "Row column count validation failed: %s",
-        column_count_result,
-    )
-        return {
-        "statusCode": 400,
-        "body": json.dumps(column_count_result),
-    }
-
-    row_result = validate_customer_id_rows(csv_rows)
-
-    if not row_result["is_valid"]:
-        logger.error("Row validation failed: %s", row_result)
-
+            "Row column count validation failed: %s",
+            column_count_result,
+        )
         return {
             "statusCode": 400,
-            "body": json.dumps(row_result),
+            "body": json.dumps(column_count_result),
         }
 
-    logger.info("Validation successful")
+    row_result = validate_customer_id_rows(csv_rows)
+    if not row_result["is_valid"]:
+        logger.error("Row validation failed: %s", row_result)
+        return {
+        "statusCode": 400,
+        "body": json.dumps(row_result),
+    }
 
+    duplicate_result = validate_duplicate_customer_ids(csv_rows)
+
+    if not duplicate_result["is_valid"]:
+        logger.error(
+            "Duplicate customer ID validation failed: %s",
+            duplicate_result,
+        )
+        return {
+        "statusCode": 400,
+        "body": json.dumps(duplicate_result),
+    }
+
+    logger.info("Validation successful")
     return {
         "statusCode": 200,
         "body": json.dumps(
