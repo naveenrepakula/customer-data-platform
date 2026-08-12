@@ -292,3 +292,59 @@ def test_lambda_handler_duplicate_customer_ids():
     assert response["statusCode"] == 400
     assert response_body["is_valid"] is False
     assert response_body["duplicate_customer_id_rows"] == [2, 3]
+
+
+def test_lambda_handler_invalid_created_at():
+    # Arrange
+    event = {
+        "Records": [
+            {
+                "s3": {
+                    "bucket": {"name": "cdp-raw-dev"},
+                    "object": {
+                        "key": "customer/invalid_created_at.csv",
+                    },
+                }
+            }
+        ]
+    }
+
+    csv_header = [
+        "customer_id",
+        "customer_name",
+        "email",
+        "created_at",
+        "phone_number",
+    ]
+
+    csv_rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-12",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+            "2026-02-29",
+            "9876543211",
+        ],
+    ]
+
+    # Act
+    with patch.object(
+        handler,
+        "read_csv_from_s3",
+        return_value=(csv_header, csv_rows),
+    ):
+        response = handler.lambda_handler(event, None)
+
+    response_body = json.loads(response["body"])
+
+    # Assert
+    assert response["statusCode"] == 400
+    assert response_body["is_valid"] is False
+    assert response_body["invalid_created_at_rows"] == [3]
