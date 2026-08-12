@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import date
 
 REQUIRED_COLUMNS = [
     "customer_id",
@@ -113,4 +114,29 @@ def validate_duplicate_customer_ids(
     return {
         "is_valid": len(duplicate_customer_id_rows) == 0,
         "duplicate_customer_id_rows": duplicate_customer_id_rows,
+    }
+
+
+def validate_created_at_rows(
+    rows: list[list[str]],
+) -> dict[str, object]:
+    invalid_created_at_rows = []
+
+    for line_number, row in enumerate(rows, start=2):
+        if len(row) <= 3:
+            continue
+
+        created_at = row[3].strip()
+
+        if created_at == "":
+            continue
+
+        try:
+            date.fromisoformat(created_at)
+        except ValueError:
+            invalid_created_at_rows.append(line_number)
+
+    return {
+        "is_valid": len(invalid_created_at_rows) == 0,
+        "invalid_created_at_rows": invalid_created_at_rows,
     }

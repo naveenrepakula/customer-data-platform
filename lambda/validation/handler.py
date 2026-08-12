@@ -8,6 +8,7 @@ sys.path.append(str(ROOT))
 
 from src.common.logger import get_logger
 from src.services.file_validation_service import (
+    validate_created_at_rows,
     validate_csv_header,
     validate_customer_id_rows,
     validate_duplicate_customer_ids,
@@ -93,6 +94,19 @@ def lambda_handler(event, context):
         return {
         "statusCode": 400,
         "body": json.dumps(duplicate_result),
+    }
+
+    created_at_result = validate_created_at_rows(csv_rows)
+
+    if not created_at_result["is_valid"]:
+        logger.error(
+        "Created_at validation failed: %s",
+        created_at_result,
+    )
+
+        return {
+        "statusCode": 400,
+        "body": json.dumps(created_at_result),
     }
 
     logger.info("Validation successful")

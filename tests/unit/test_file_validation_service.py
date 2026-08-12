@@ -1,4 +1,5 @@
 from src.services.file_validation_service import (
+    validate_created_at_rows,
     validate_csv_header,
     validate_customer_id_rows,
     validate_duplicate_customer_ids,
@@ -515,3 +516,171 @@ def test_validate_duplicate_customer_ids_with_multiple_duplicate_ids():
     # Assert
     assert result["is_valid"] is False
     assert result["duplicate_customer_id_rows"] == [2, 3, 4, 5]
+
+
+def test_validate_created_at_rows_with_invalid_calendar_date():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-12",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+            "2026-02-29",
+            "9876543211",
+        ],
+    ]
+
+    # Act
+    result = validate_created_at_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["invalid_created_at_rows"] == [3]
+
+
+def test_validate_created_at_rows_with_wrong_date_format():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "12-08-2026",
+            "9876543210",
+        ],
+    ]
+
+    # Act
+    result = validate_created_at_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["invalid_created_at_rows"] == [2]
+
+
+def test_validate_created_at_rows_with_wrong_separator():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026/08/12",
+            "9876543210",
+        ],
+    ]
+
+    # Act
+    result = validate_created_at_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["invalid_created_at_rows"] == [2]
+
+
+def test_validate_created_at_rows_with_non_date_value():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "abc",
+            "9876543210",
+        ],
+    ]
+
+    # Act
+    result = validate_created_at_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["invalid_created_at_rows"] == [2]
+
+
+def test_validate_created_at_rows_with_multiple_invalid_dates():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-02-29",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+            "2026-08-12",
+            "9876543211",
+        ],
+        [
+            "CUST003",
+            "Charlie",
+            "charlie@example.com",
+            "abc",
+            "9876543212",
+        ],
+    ]
+
+    # Act
+    result = validate_created_at_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["invalid_created_at_rows"] == [2, 4]
+
+
+def test_validate_created_at_rows_success():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "2026-08-12",
+            "9876543210",
+        ],
+        [
+            "CUST002",
+            "Bob",
+            "bob@example.com",
+            "2025-12-31",
+            "9876543211",
+        ],
+    ]
+
+    # Act
+    result = validate_created_at_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is True
+    assert result["invalid_created_at_rows"] == []
+
+
+def test_validate_created_at_rows_allows_blank_value():
+    # Arrange
+    rows = [
+        [
+            "CUST001",
+            "Alice",
+            "alice@example.com",
+            "",
+            "9876543210",
+        ],
+    ]
+
+    # Act
+    result = validate_created_at_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is True
+    assert result["invalid_created_at_rows"] == []
