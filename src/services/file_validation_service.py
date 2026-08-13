@@ -140,3 +140,36 @@ def validate_created_at_rows(
         "is_valid": len(invalid_created_at_rows) == 0,
         "invalid_created_at_rows": invalid_created_at_rows,
     }
+
+
+def validate_email_rows(
+    rows: list[list[str]],
+) -> dict[str, object]:
+    invalid_email_rows = []
+
+    for line_number, row in enumerate(rows, start=2):
+        if len(row) <= 2:
+            continue
+
+        email = row[2].strip()
+
+        if email == "":
+            continue
+
+        if "@" not in email:
+            invalid_email_rows.append(line_number)
+            continue
+
+        local_part, domain = email.rsplit("@", 1)
+
+        if local_part == "" or domain == "":
+            invalid_email_rows.append(line_number)
+            continue
+
+        if "." not in domain or domain.startswith(".") or domain.endswith("."):
+            invalid_email_rows.append(line_number)
+
+    return {
+        "is_valid": len(invalid_email_rows) == 0,
+        "invalid_email_rows": invalid_email_rows,
+    }

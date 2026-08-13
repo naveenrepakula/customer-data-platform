@@ -12,6 +12,7 @@ from src.services.file_validation_service import (
     validate_csv_header,
     validate_customer_id_rows,
     validate_duplicate_customer_ids,
+    validate_email_rows,
     validate_row_column_count,
 )
 from src.services.s3_csv_service import read_csv_from_s3
@@ -107,6 +108,18 @@ def lambda_handler(event, context):
         return {
         "statusCode": 400,
         "body": json.dumps(created_at_result),
+    }
+
+    email_result = validate_email_rows(csv_rows)
+    if not email_result["is_valid"]:
+        logger.error(
+        "Email validation failed: %s",
+        email_result,
+    )
+
+        return {
+        "statusCode": 400,
+        "body": json.dumps(email_result),
     }
 
     logger.info("Validation successful")

@@ -348,3 +348,59 @@ def test_lambda_handler_invalid_created_at():
     assert response["statusCode"] == 400
     assert response_body["is_valid"] is False
     assert response_body["invalid_created_at_rows"] == [3]
+
+
+def test_lambda_handler_invalid_email():
+    # Arrange
+    event = {
+        "Records": [
+            {
+                "s3": {
+                    "bucket": {"name": "cdp-raw-dev"},
+                    "object": {
+                        "key": "customer/invalid_email.csv",
+                    },
+                }
+            }
+        ]
+    }
+
+    csv_header = [
+        "customer_id",
+        "customer_name",
+        "email",
+        "created_at",
+        "phone_number",
+    ]
+
+    csv_rows = [
+        [
+            "1001",
+            "Alice",
+            "alice",
+            "2026-07-22",
+            "9000000001",
+        ],
+        [
+            "1002",
+            "Bob",
+            "bob@",
+            "2026-07-22",
+            "9000000002",
+        ],
+    ]
+
+    # Act
+    with patch.object(
+        handler,
+        "read_csv_from_s3",
+        return_value=(csv_header, csv_rows),
+    ):
+        response = handler.lambda_handler(event, None)
+
+    response_body = json.loads(response["body"])
+
+    # Assert
+    assert response["statusCode"] == 400
+    assert response_body["is_valid"] is False
+    assert response_body["invalid_email_rows"] == [2, 3]

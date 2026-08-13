@@ -1,10 +1,29 @@
+import csv
+from pathlib import Path
+
 from src.services.file_validation_service import (
     validate_created_at_rows,
     validate_csv_header,
     validate_customer_id_rows,
     validate_duplicate_customer_ids,
+    validate_email_rows,
     validate_row_column_count,
 )
+
+FIXTURE_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "samples"
+    / "customer_csv"
+    / "invalid_email.csv"
+)
+
+
+def load_csv_fixture(path: Path) -> tuple[list[str], list[list[str]]]:
+    with path.open(newline="", encoding="utf-8-sig") as file:
+        reader = csv.reader(file)
+        rows = list(reader)
+
+    return rows[0], rows[1:]
 
 
 def test_validate_csv_header_success():
@@ -684,3 +703,39 @@ def test_validate_created_at_rows_allows_blank_value():
     # Assert
     assert result["is_valid"] is True
     assert result["invalid_created_at_rows"] == []
+
+
+def test_validate_email_rows_with_invalid_emails():
+    # Arrange
+    _, rows = load_csv_fixture(FIXTURE_PATH)
+
+    # Act
+    result = validate_email_rows(rows)
+
+    # Assert
+    assert result["is_valid"] is False
+    assert result["invalid_email_rows"] == [2, 3, 4, 5]
+
+
+def test_validate_email_rows_with_valid_emails():
+    rows = [
+        [
+            "1001",
+            "Alice",
+            "alice@example.com",
+            "2026-07-22",
+            "9000000001",
+        ],
+        [
+            "1002",
+            "Bob",
+            "bob.smith@company.co.in",
+            "2026-07-22",
+            "9000000002",
+        ],
+    ]
+
+    result = validate_email_rows(rows)
+
+    assert result["is_valid"] is True
+    assert result["invalid_email_rows"] == []
