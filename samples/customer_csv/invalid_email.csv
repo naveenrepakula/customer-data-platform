@@ -1,0 +1,6 @@
+customer_id,customer_name,email,created_at,phone_number
+1001,Alice,alice,2026-07-22,9000000001
+1002,Bob,bob@,2026-07-22,9000000002
+1003,Charlie,@example.com,2026-07-22,9000000003
+1004,David,david@.com,2026-07-22,9000000004
+1005,Eve,eve@example.com,2026-07-22,9000000005
