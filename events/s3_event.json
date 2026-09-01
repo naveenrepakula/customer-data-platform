@@ -3,7 +3,7 @@
     {
       "s3": {
         "bucket": {
-          "name": "cdp-raw-dev"
+          "name": "cdp-raw-dev-439701543859-ap-south-1"
         },
         "object": {
           "key": "customer/customer_sample.csv"
